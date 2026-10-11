@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI API Health & Alert Monitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+  <div class="max-w-6xl mx-auto p-6">
+    <header class="flex justify-between items-center mb-8 border-b pb-4">
+      <div>
+        <h1 class="text-3xl font-bold text-blue-600">AI API Monitor & Alert System</h1>
+        <p class="text-sm text-gray-500">Real-time anomaly detection and LLM-powered incident alerts</p>
+      </div>
+      <button onclick="fetchAlerts()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">
+        Refresh Alerts
+      </button>
+    </header>
+
+    <!-- Alerts Container -->
+    <main>
+      <h2 class="text-xl font-semibold mb-4">Active System Anomalies</h2>
+      <div id="alerts-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Dynamically injected alert cards -->
+      </div>
+    </main>
+  </div>
+
+  <script>
+    async function fetchAlerts() {
+      try {
+        const res = await fetch('/alerts');
+        const alerts = await res.json();
+        const container = document.getElementById('alerts-list');
+        container.innerHTML = '';
+
+        if (alerts.length === 0) {
+          container.innerHTML = `<p class="text-gray-500 col-span-2 bg-white p-6 rounded-lg shadow-sm border text-center">No active anomalies detected. All systems healthy!</p>`;
+          return;
+        }
+
+        alerts.forEach(alert => {
+          const card = document.createElement('div');
+          card.className = "bg-white border-l-4 border-red-500 p-5 rounded-lg shadow-sm flex flex-col justify-between";
+          card.innerHTML = `
+            <div>
+              <div class="flex justify-between items-start mb-2">
+                <span class="font-bold text-lg text-gray-800">${alert.api_name}</span>
+                <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-semibold">HTTP ${alert.status_code}</span>
+              </div>
+              <p class="text-gray-700 font-medium my-2 bg-gray-50 p-3 rounded border">${alert.ai_alert}</p>
+              <div class="text-xs text-gray-500 space-x-4 mt-2">
+                <span>Response Time: <strong>${alert.response_time_ms} ms</strong></span>
+                <span>Records: <strong>${alert.records_returned}</strong></span>
+              </div>
+            </div>
+            <div class="text-right text-xs text-gray-400 mt-4">
+              ${new Date(alert.timestamp).toLocaleString()}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error('Error fetching alerts:', err);
+      }
+    }
+
+    // Load alerts on page load and auto-refresh every 10 seconds
+    fetchAlerts();
+    setInterval(fetchAlerts, 10000);
+  </script>
+</body>
+</html>
