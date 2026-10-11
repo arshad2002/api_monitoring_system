@@ -1,4 +1,5 @@
 const { GoogleGenAI } = require('@google/genai');
+const logger = require('../utils/logger');
 
 // Initialize the Google Gen AI SDK using the API key from environment variables
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -24,7 +25,7 @@ async function generateAIAlert(apiItem) {
 
     return response.text.trim();
   } catch (error) {
-    console.error('LLM Generation Error:', error.message);
+    logger.error(`LLM Generation Error for "${apiItem.api_name}": ${error.message}`);
     // Fallback alert if AI generation fails temporarily
     return `${apiItem.api_name} encountered anomalies (Status: ${apiItem.status_code}, Time: ${apiItem.response_time_ms}ms).`;
   }

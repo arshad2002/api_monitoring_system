@@ -1,15 +1,24 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const morgan = require('morgan');
 require('dotenv').config();
 
 const monitorRoutes = require('./routes/monitorRoutes');
+const logger = require('./utils/logger');
 
 const app = express();
 
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+// HTTP request logging via morgan — stream output through winston
+app.use(
+  morgan('combined', {
+    stream: { write: (message) => logger.http(message.trim()) },
+  })
+);
 
 // Serve static frontend files from the 'public' folder
 app.use(express.static('public'));
@@ -21,13 +30,15 @@ app.use('/', monitorRoutes);
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/api_monitor';
 
-mongoose.connect(MONGO_URI)
+mongoose
+  .connect(MONGO_URI)
   .then(() => {
-    console.log('Successfully connected to MongoDB');
+    logger.info('Successfully connected to MongoDB');
     app.listen(PORT, () => {
-      console.log(`Server is running and listening on port ${PORT}`);
+      logger.info(`Server is running and listening on port ${PORT}`);
     });
   })
-  .catch(err => {
-    console.error('Database connection error:', err);
+  .catch((err) => {
+    logger.error('Database connection error', err);
+    process.exit(1);
   });
